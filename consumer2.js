@@ -17,8 +17,12 @@
     eventname: String
   },
   timestamp:  String
-});
-  var Tweet=mongoose.model('Tweet',TweetSchema);
+},{timestamps:true});
+
+  TweetSchema.index({createdAt: 1},{expireAfterSeconds: 10});
+
+    var Tweet=mongoose.model('Tweet',TweetSchema);
+
 
     var MongoClient = require('mongodb').MongoClient;
     var redis = require('redis');
@@ -28,14 +32,14 @@
     var fs=require('fs');
     var Consumer = kafka.Consumer;
     var client = new kafka.Client();
-    var consumer = new Consumer(client,[{topic:"Ezest-Whiziblem-connect-MileStone"}],
+    var consumer = new Consumer(client,[{topic:"Ezest-Ascent-connect-ODApplication",partition:0},{topic:"Ezest-Whiziblem-connect-MileStone",partition:0}
+      ,{topic:"Ezest-Ascent-connect-LeaveApplication",partition:0},{topic:"Ezest-Whizible-connect-ProjectRisk",partition:0},{topic:"Ezest-Whiziblem-connect-Customer",partition:0}],
     {
         autoCommit: false,
         fetchMaxBytes: 1024 * 1024
     }
 );
 
-var current_topic="Ezest-Whiziblem-connect-MileStone";
 var flag=1;
 //Exceuting unix command for navigating into the particular directory
 var exec=require("child_process").exec;
@@ -145,6 +149,7 @@ function Message_formation(message)
     var final_msg=filter_templates(msg);
 
 }
+
 function filter_templates(message)
 {
   var name,id;
@@ -159,7 +164,9 @@ function filter_templates(message)
 
                if(doc!=undefined)
                {
-                  if(current_topic.includes(doc.parent_name))
+                  for(l=0;l<topic_list.length;l++)
+                  {
+                  if(topic_list[l].includes(doc.parent_name))
                   {
 					           if(doc.parent_name!=undefined && doc.parent_id!=undefined)
 					           {
@@ -192,11 +199,11 @@ function filter_templates(message)
                     
                     if(msg.length>2)
                     {
-                      console.log("Message is="+msg);
                       send_to_mongo(msg,name,id);
                     } 
                   }
                }
+             }
          });
      }
    }
@@ -208,7 +215,6 @@ function filter_templates(message)
 
 function send_to_mongo(msg,name,id)
 {
-
 	var tweet=new Tweet({
 		'author':{
 			'eventId':id,
