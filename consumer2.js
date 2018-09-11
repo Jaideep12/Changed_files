@@ -5,7 +5,7 @@
     var mongoose = require('mongoose');
     var Schema = mongoose.Schema;
     var ttl = require('ol-mongoose-ttl');
-    mongoose.connect('mongodb://localhost/sample');
+    mongoose.connect('mongodb://172.52.90.34:27017/TestServerSimpleTwitter');
 
   var TweetSchema = new Schema({
   message: String,
@@ -16,12 +16,13 @@
     },
     eventname: String
   },
-  timestamp:  String
+  timestamp:  Date,
+  details:Array
 },{timestamps:true});
 
   TweetSchema.index({createdAt: 1},{expireAfterSeconds: 10});
 
-    var Tweet=mongoose.model('Tweet',TweetSchema);
+    var Tweet_second=mongoose.model('Tweet_second',TweetSchema);
 
 
     var MongoClient = require('mongodb').MongoClient;
@@ -186,20 +187,25 @@ function filter_templates(message)
                        }        
                     }
                     var object={};
+                    var message_final="";
+                    var details;
                     for(j=0;j<template_array.length;j=j+2)
                     {
                         var jsonParsed = JSON.parse(message);
                         var key = template_array[j];
+                        details=jsonParsed.payload;
                         if(typeof(jsonParsed.payload[template_array[j]])!='undefined' && typeof(jsonParsed.payload[template_array[j]])!='null')
                         {
                            object[key]=jsonParsed.payload[template_array[j]];
+                           message_final=message_final+key+"="+jsonParsed.payload[template_array[j]]+",";
                         }
                     }
+                    var send_message=String(message_final);
                     var msg=JSON.stringify(object); 
                     
                     if(msg.length>2)
                     {
-                      send_to_mongo(msg,name,id);
+                      send_to_mongo(msg,name,id,send_message,details);
                     } 
                   }
                }
@@ -213,18 +219,20 @@ function filter_templates(message)
 }
 
 
-function send_to_mongo(msg,name,id)
+function send_to_mongo(msg,name,id,message_send,details)
 {
-	var tweet=new Tweet({
+	var tweet2=new Tweet_second({
 		'author':{
 			'eventId':id,
 			'eventname':name
 		},
-		'message':msg
+		'message':message_send,
+    'timestamp': new Date(),
+    'details':details
 	});
-	console.log("The tweet constructed is ="+tweet);
+	console.log("The tweet constructed is ="+tweet2);
   
-     tweet.save(function(err){
+     tweet2.save(function(err){
 		 if(err)
 		 {
       throw err;
