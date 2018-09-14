@@ -13,7 +13,7 @@
     var conString = "postgres://pranav:pass1234@172.52.110.54:5432/demo";
 
 
-
+   //Creating client for green plum
    var client_green = new pg.Client(conString);
    client_green.connect(function(err){
     if(err)
@@ -48,7 +48,7 @@
   //var tweet=mongoose.model('Tweet_second');//Registering the schema for the database
 
 
-
+    //Importing required modules
     var MongoClient = require('mongodb').MongoClient; 
     var assert=require('assert');
     var kafka = require('kafka-node');
@@ -57,6 +57,8 @@
     var client = new kafka.Client();
     var Offset = kafka.Offset;
     var topic = 'Ezest-Whiziblem-connect-MileStone';
+
+    //configuring Kafka consumer for node.js
     var consumer = new Consumer(client,[{topic:"Ezest-Ascent-connect-ODApplication",partition:0},{topic:"Ezest-Whiziblem-connect-MileStone",partition:0}
       ,{topic:"Ezest-Ascent-connect-LeaveApplication",partition:0},{topic:"Ezest-Whizible-connect-ProjectRisk",partition:0},{topic:"Ezest-Whiziblem-connect-Customer",partition:0},
       {topic:"Ezest-Whiziblem-connect-HelpDesk",partition:0}],
@@ -162,7 +164,7 @@ function Message_formation(message)
         var name=field[i].name;
         if(name!=undefined)
         {
-          if(name.includes("Timestamp"))
+          if(name.includes("Timestamp"))   //Converting string values specified as timestamps to particular date values
           {
             var temp=field[i].field;
             var val=jsonParsed.payload[temp];
@@ -190,20 +192,22 @@ function filter_templates(message)
 
      var cursor = dbo.collection('events').find();
      {
+     	//Iterating over each document
          cursor.each(function(err, doc) {
 
                if(doc!=undefined)
                {
-                  for(l=0;l<topic_list.length;l++)
+                  for(l=0;l<topic_list.length;l++)//Checking for each topic
                   {
-                  if(topic_list[l].includes(doc.parent_name))
+                  if(topic_list[l].includes(doc.parent_name)) 
                   {
                      if(doc.parent_name!=undefined && doc.parent_id!=undefined)
                      {
                           name=doc.parent_name;
                           id=doc.parent_id;
                      }
-        
+                    
+                    //Taking the required templates from the events collection
                     var event_message=doc.event_message;
                     var fields=event_message.split('#');
                     var template_array=[];
@@ -218,6 +222,8 @@ function filter_templates(message)
                     var object={};
                     var message_final="";
                     var details;
+
+                    //Creation of Message JSON
                     for(j=0;j<template_array.length;j=j+2)
                     {
                         var jsonParsed = JSON.parse(message);
@@ -232,6 +238,7 @@ function filter_templates(message)
                     var send_message=String(message_final);
                     var msg=JSON.stringify(object); 
                     
+                    //If the message is not an empty message
                     if(msg.length>2)
                     {
                       var tweet;
@@ -249,7 +256,7 @@ function filter_templates(message)
 });
 }
 
-
+//Function for sending the message to green plum
 function send_to_greenplum(msg)
 {
    client_green.query("INSERT INTO Messages(msg)values("+"'"+msg+"'"+")", function (err, result) {
@@ -272,6 +279,7 @@ function send_to_greenplum(msg)
 //Function for sending the data into the MongoDB database
 function send_to_mongo(msg,name,id,message_send,details)
 {
+	//Constructing the tweet to be stored
   var tweet2=new Tweet_second({
     'author':{
       'eventId':id,
@@ -303,8 +311,6 @@ function send_to_mongo(msg,name,id,message_send,details)
 consumer.on('error', function (err) {
     console.log('Error:',err);
 })
-
-
 
 consumer.on('offsetOutOfRange', function (topic) {
    topic.maxNum = 2;
